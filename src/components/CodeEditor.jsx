@@ -46,7 +46,7 @@ const CodeEditor = () => {
 
                 </Box>
 
-                <Output />
+                <Output editorRef = {editorRef} language={language} />
             </HStack>
 
 
