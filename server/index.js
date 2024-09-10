@@ -6,6 +6,12 @@ const { Server } = require('socket.io');
 const server = http.createServer(app);
 const io = new Server(server);
 
+const cors = require('cors');
+app.use(cors({
+    origin: 'https://cde-frontend.netlify.app/',
+}));
+
+
 const userSocketMap = {};
 const roomCodeMap = {}; 
 const getAllConnectedClients = (roomId) => {
