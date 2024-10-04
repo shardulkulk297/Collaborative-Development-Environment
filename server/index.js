@@ -1,8 +1,19 @@
-#!/usr/bin/env node
-
 const express = require("express");
 const app = express();
 const http = require('http');
+
+//User Authentication Code
+
+app.get('/hello', (requ, res)=>{
+    res.send('hello world')
+})
+
+
+
+
+//User Authentication Code
+
+//Real time user Connections
 const { Server } = require('socket.io');
 
 const server = http.createServer(app);
@@ -102,6 +113,9 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log('server is running'));
+
+
+
 
 
 
