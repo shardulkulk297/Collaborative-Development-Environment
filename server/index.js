@@ -1,12 +1,45 @@
 const express = require("express");
 const app = express();
 const http = require('http');
+const cors = require('cors');
+const mongoose = require('mongoose')
+app.use(cors())
 
 //User Authentication Code
 
-app.get('/hello', (requ, res)=>{
+mongoose.connect('mongodb://localhost:27017/CDE')
+
+app.use(express.json())
+
+app.get('/hello', (requ, res) => {
     res.send('hello world')
 })
+
+app.post('/api/register', async (requ, res) => {
+    try {
+
+         await User.create({
+            username: requ.body.username,
+            email: requ.body.email,
+            password: requ.body.password,
+        })
+        res.json({ status: 'ok' })
+        
+
+        console.log(requ.body);
+        
+
+    }
+
+    catch(err){
+        res.json({ status: 'error', error: 'Duplicate Email' })
+        console.log(err);
+    }
+    
+})
+
+
+
 
 
 
@@ -19,14 +52,14 @@ const { Server } = require('socket.io');
 const server = http.createServer(app);
 const io = new Server(server);
 
-const cors = require('cors');
-app.use(cors({
-    origin: 'https://cde-frontend.netlify.app/',
-}));
+
+// app.use(cors({
+//     origin: 'https://cde-frontend.netlify.app/',
+// }));
 
 
 const userSocketMap = {};
-const roomCodeMap = {}; 
+const roomCodeMap = {};
 const getAllConnectedClients = (roomId) => {
     return Array.from(io.sockets.adapter.rooms.get(roomId) || []).map((socketId) => {
         return {

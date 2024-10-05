@@ -8,6 +8,9 @@ import { useNavigate } from 'react-router-dom';
 const Home = () => {
   const [roomId, setroomId] = useState("");
   const [username, setusername] = useState("");
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [role, setRole] = useState('')
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -24,6 +27,32 @@ const Home = () => {
     toast.success("Room Id is Generated Successfully")
 
     
+  }
+
+  const registerUser = async (e)=>{
+    e.preventDefault()
+
+    
+    
+    const response = await fetch('http://localhost:5000/api/register',{
+
+      method: 'POST',
+
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        roomId,
+        username, 
+        email, 
+        password,
+        role
+      }),
+    } )
+
+    const data = await response.json()
+    console.log(data);
+
   }
 
   const joinRoom = () => {
@@ -71,12 +100,41 @@ const Home = () => {
                 }
                 }
                 type="text" className='form-control mb-2 block w-full px-4 py-2 text-white bg-[#1a1326] border border-[#9a86d4] rounded-md focus:outline-none focus:ring-2 focus:ring-[#c6b0ff] placeholder-gray-400' placeholder='Username' />
+
+                <input 
+                value={email} onChange={(e) => {
+                  setEmail(e.target.value)
+                  
+                }
+                }
+                type="email" className='form-control mb-2 block w-full px-4 py-2 text-white bg-[#1a1326] border border-[#9a86d4] rounded-md focus:outline-none focus:ring-2 focus:ring-[#c6b0ff] placeholder-gray-400' placeholder='Email' />
+
+              <input 
+                value={password} onChange={(e) => {
+                  setPassword(e.target.value)
+                  
+                }
+                }
+                type="password" className='form-control mb-2 block w-full px-4 py-2 text-white bg-[#1a1326] border border-[#9a86d4] rounded-md focus:outline-none focus:ring-2 focus:ring-[#c6b0ff] placeholder-gray-400' placeholder='Password' />
+
+              <select
+                value={role} onChange={(e) => {
+                  setRole(e.target.value)
+                  
+                }
+                }
+                type="selectlist" className='form-control mb-2 block w-full px-4 py-2 text-white bg-[#1a1326] border border-[#9a86d4] rounded-md focus:outline-none focus:ring-2 focus:ring-[#c6b0ff] placeholder-gray-400' placeholder='ROLE' >
+                  <option value="">Select Role</option>
+                  <option value="Project Manager">Project Manager</option>
+                  <option value="Team Leader">Team Leader</option>
+                  <option value="Member">Member</option>
+                   </select>
               </div>
 
               <button
               
-              onClick={joinRoom}
-              className='px-6 py-3 bg-[#5ac18e] text-[#0f0a19] font-semibold rounded-lg shadow-md hover:bg-[#48a178] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5ac18e] transition duration-300 ease-in-out'>Join</button>
+              onClick={registerUser}
+              className='px-6 py-3 bg-[#5ac18e] text-[#0f0a19] font-semibold rounded-lg shadow-md hover:bg-[#48a178] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5ac18e] transition duration-300 ease-in-out'>Join Project</button>
               <p className='mt-3 text-white'>Don't have a Room Id? <span 
               className='text-green-500 cursor-pointer'
               onClick={generateRoomId}
