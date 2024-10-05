@@ -7,7 +7,15 @@ app.use(cors())
 
 //User Authentication Code
 
-mongoose.connect('mongodb://localhost:27017/CDE')
+const User = require('./models/user.model');
+
+
+mongoose.connect('mongodb://localhost:27017/CDE', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+}).then(() => console.log('MongoDB connected'))
+    .catch(err => console.log(err));
+
 
 app.use(express.json())
 
@@ -17,26 +25,71 @@ app.get('/hello', (requ, res) => {
 
 app.post('/api/register', async (requ, res) => {
     try {
-
-         await User.create({
-            username: requ.body.username,
-            email: requ.body.email,
-            password: requ.body.password,
+        const { roomId,
+            username,
+            email,
+            password,
+            role, } = requ.body;
+        await User.create({
+            roomId,
+            username,
+            email,
+            password,
+            role,
         })
-        res.json({ status: 'ok' })
-        
+        res.json({ status: 'ok', user: true, message: 'Registered Successfully' })
+
 
         console.log(requ.body);
-        
+
 
     }
 
-    catch(err){
+    catch (err) {
         res.json({ status: 'error', error: 'Duplicate Email' })
         console.log(err);
     }
-    
+
 })
+
+app.post('/api/login', async (requ, res) => {
+    try {
+
+        const { username, email, password } = requ.body;
+
+        const user = await User.findOne({
+            username,
+            email,
+            password
+        })
+
+        if (user) {
+
+            return res.json({ status: 'ok Logged In', user: true })
+
+
+        }
+
+        else {
+            return res.json({ status: 'error', user: false })
+
+
+        }
+
+
+
+
+
+
+    }
+
+    catch (err) {
+        res.json({ status: 'error', error: 'Duplicate Email or error' })
+        console.log(err);
+    }
+
+})
+
 
 
 

@@ -53,6 +53,49 @@ const Home = () => {
     const data = await response.json()
     console.log(data);
 
+    if (!roomId || !username || !email || !password || !role) {
+      toast.error('Please fill in all fields');
+      return;
+  }
+
+    if (data.status === 'ok') {
+      toast.success('Registration Successful');
+    } else {
+      toast.error('Fill Everything');
+    }
+
+  }
+
+  const loginUser = async (e)=>{
+
+    e.preventDefault()
+
+    const response = await fetch('http://localhost:5000/api/login',{
+
+      method: 'POST',
+
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        
+        username, 
+        email, 
+        password,
+
+      }),
+    } )
+
+    const data = await response.json()
+    console.log(data)
+
+    if (data.user) {
+      toast.success('Login successful');
+      // Optionally, redirect user or perform other actions
+    } else {
+      toast.error('Invalid credentials');
+    }
+
   }
 
   const joinRoom = () => {
@@ -134,14 +177,21 @@ const Home = () => {
               <button
               
               onClick={registerUser}
-              className='px-6 py-3 bg-[#5ac18e] text-[#0f0a19] font-semibold rounded-lg shadow-md hover:bg-[#48a178] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5ac18e] transition duration-300 ease-in-out'>Join Project</button>
+              className='m-5 px-6 py-3 bg-[#5ac18e] text-[#0f0a19] font-semibold rounded-lg shadow-md hover:bg-[#48a178] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5ac18e] transition duration-300 ease-in-out'>Register</button>
+               
+               <button  onClick={loginUser}
+              className='m-5 px-6 py-3 bg-[#5ac18e] text-[#0f0a19] font-semibold rounded-lg shadow-md hover:bg-[#48a178] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5ac18e] transition duration-300 ease-in-out'>
+                Login
+              </button>
+
+
               <p className='mt-3 text-white'>Don't have a Room Id? <span 
               className='text-green-500 cursor-pointer'
               onClick={generateRoomId}
               
               >New Room</span></p>
 
-
+             
 
 
 
