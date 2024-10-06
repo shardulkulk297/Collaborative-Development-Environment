@@ -8,6 +8,9 @@ app.use(cors())
 //User Authentication Code
 
 const User = require('./models/user.model');
+const jwt = require('jsonwebtoken');
+
+
 
 
 mongoose.connect('mongodb://localhost:27017/CDE', {
@@ -55,6 +58,8 @@ app.post('/api/register', async (requ, res) => {
 app.post('/api/login', async (requ, res) => {
     try {
 
+        
+       
         const { username, email, password } = requ.body;
 
         const user = await User.findOne({
@@ -65,7 +70,13 @@ app.post('/api/login', async (requ, res) => {
 
         if (user) {
 
-            return res.json({ status: 'ok Logged In', user: true })
+            const token = jwt.sign({
+                
+                username: user.username,
+                email: user.email
+            }, 'CDE@297')
+
+            return res.json({ status: 'ok Logged In', user: token })
 
 
         }
@@ -90,8 +101,49 @@ app.post('/api/login', async (requ, res) => {
 
 })
 
+app.get('/api/quote', async(req, res)=>{
+    const token = req.headers['x-access-token']
+
+        try{
+            const decoded = jwt.verify(token, 'CDE@297')
+            const email = decoded.email
+            const user = await User.findOne({email: email})
+
+            console.log('Token Validated', email);
+            res.json({status:'ok', message: 'Token successfully Validated'})
+            
+        }
+        catch(error){
+            console.log(error)
+            res.json({status: 'error', error: 'Invalid Token'})
+        }
+})
+
+app.post('/api/quote', async(req, res)=>{
+    const token = req.headers['x-access-token']
+
+        try{
+            const decoded = jwt.verify(token, 'CDE@297')
+            const email = decoded.email
+            const user = await User.updateOne({email: email}, { $set: { quote: req.body.quote}})
+            return {status: 'ok'}
+        }
+        catch(error){
+            console.log(error)
+            res.json({status: 'error', error: 'Invalid Token'})
+        }
+})
 
 
+
+
+
+
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST"],
+    credentials: true
+}))
 
 
 
@@ -103,7 +155,16 @@ app.post('/api/login', async (requ, res) => {
 const { Server } = require('socket.io');
 
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
+
+
+
 
 
 // app.use(cors({

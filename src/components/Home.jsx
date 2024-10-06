@@ -54,12 +54,13 @@ const Home = () => {
     console.log(data);
 
     if (!roomId || !username || !email || !password || !role) {
-      toast.error('Please fill in all fields');
+      toast.error('Please fill in all fields or check you email if it exists');
       return;
   }
 
     if (data.status === 'ok') {
       toast.success('Registration Successful');
+      joinRoom();
     } else {
       toast.error('Fill Everything');
     }
@@ -90,8 +91,10 @@ const Home = () => {
     console.log(data)
 
     if (data.user) {
+      localStorage.setItem('token', data.user)
       toast.success('Login successful');
-      // Optionally, redirect user or perform other actions
+      //redirect user to the code editor
+      joinRoom();
     } else {
       toast.error('Invalid credentials');
     }

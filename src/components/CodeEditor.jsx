@@ -11,6 +11,8 @@ import { useNavigate, useLocation, useParams, Navigate } from 'react-router-dom'
 import { initSocket } from '../socket'
 import toast from 'react-hot-toast'
 import { throttle } from 'lodash'
+import { jwtDecode } from "jwt-decode";
+
 
 
 
@@ -26,8 +28,59 @@ const CodeEditor = () => {
     const location = useLocation();
     const { roomId } = useParams();
     const navigate = useNavigate();
+
+
+    const saveToken = async () => {
+
+        const req = await fetch('http://localhost:5000/api/quote', {
+            headers: {
+                'x-access-token': localStorage.getItem('token'),
+            },
+        })
+
+        const data = await req.json()
+        console.log(data);
+
+    }
+
+
+
+
     useEffect(() => {
+
+        const token = localStorage.getItem('token')
+
+        if (token) {
+
+            try {
+
+                const user =  jwtDecode(token);
+
+                if (!user) {
+                    localStorage.removeItem('token')
+                    navigate('/')
+                }
+                else {
+                    saveToken()
+                }
+
+            }
+
+            catch(error){
+                console.log('Invalid token', error);
+                navigate('/')
+            }
+            
+
+
+        }
+
+
+
+
         const init = async () => {
+
+
 
             socketRef.current = await initSocket();
             socketRef.current.on("connect_error", (err) => {
@@ -91,7 +144,7 @@ const CodeEditor = () => {
                 }
             });
 
-            
+
         };
 
         init()
@@ -146,7 +199,7 @@ const CodeEditor = () => {
                 })
             }
 
-            
+
         });
     };
 
@@ -175,17 +228,17 @@ const CodeEditor = () => {
         throttledEmit(value);
     };
 
-    const copyRoomId = async ()=>{
+    const copyRoomId = async () => {
         try {
             await navigator.clipboard.writeText(roomId);
             toast.success('roomId is copied');
         } catch (error) {
             toast.error("ERROR")
-            
+
         }
     }
 
-    const leaveRoom = async ()=>{
+    const leaveRoom = async () => {
         navigate("/");
     }
 
@@ -224,13 +277,13 @@ const CodeEditor = () => {
 
                         <div className='mt-auto flex flex-col p-4'>
                             <hr className='p-2' />
-                            <button onClick={copyRoomId} 
-                            className='mb-4 px-6 py-3 bg-[#5ac18e] text-[#0f0a19] font-semibold rounded-lg shadow-md hover:bg-[#48a178] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5ac18e] transition duration-300 ease-in-out'>
+                            <button onClick={copyRoomId}
+                                className='mb-4 px-6 py-3 bg-[#5ac18e] text-[#0f0a19] font-semibold rounded-lg shadow-md hover:bg-[#48a178] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5ac18e] transition duration-300 ease-in-out'>
                                 Copy Room Id
                             </button>
 
-                            <button onClick={leaveRoom} 
-                            className=' mb-4 px-6 py-3 bg-[#f01808] text-[#0f0a19] font-semibold rounded-lg shadow-md hover:bg-[#823803] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5ac18e] transition duration-300 ease-in-out'>
+                            <button onClick={leaveRoom}
+                                className=' mb-4 px-6 py-3 bg-[#f01808] text-[#0f0a19] font-semibold rounded-lg shadow-md hover:bg-[#823803] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5ac18e] transition duration-300 ease-in-out'>
                                 Leave Room
                             </button>
 
@@ -255,7 +308,7 @@ const CodeEditor = () => {
                                     language={language} defaultValue={CODE_SNIPPETS[language]}
                                     value={value}
                                     onMount={onMount}
-                                    onChange={onChange}/>;
+                                    onChange={onChange} />;
 
 
                             </Box>
