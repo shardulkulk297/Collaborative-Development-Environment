@@ -144,6 +144,25 @@ const CodeEditor = () => {
                 }
             });
 
+            const response = await fetch(`http://localhost:5000/api/get-code/${roomId}`, {
+                headers:{
+                    'x-access-token': localStorage.getItem('token'),
+                }
+            })
+
+            const data = await response.json();
+
+            if(data.status === 'ok')
+            {
+                setvalue(data.code);
+                valueRef.current = data.code;
+                editorRef.current.setValue(data.code);
+            }
+
+
+            
+            
+            
 
         };
 
@@ -239,6 +258,18 @@ const CodeEditor = () => {
     }
 
     const leaveRoom = async () => {
+
+        const code = valueRef.current;
+
+        await fetch('http://localhost:5000/api/save-code'),{
+            method: 'POST',
+            headers:{
+                'Content-type': 'application/json',
+                'x-access-token': localStorage.getItem('token'),
+            },
+            body:JSON.stringify({roomId, code})
+        }
+        
         navigate("/");
     }
 
@@ -284,7 +315,7 @@ const CodeEditor = () => {
 
                             <button onClick={leaveRoom}
                                 className=' mb-4 px-6 py-3 bg-[#f01808] text-[#0f0a19] font-semibold rounded-lg shadow-md hover:bg-[#823803] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5ac18e] transition duration-300 ease-in-out'>
-                                Leave Room
+                                Save & Leave Room
                             </button>
 
                         </div>
