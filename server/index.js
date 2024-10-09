@@ -28,17 +28,17 @@ app.get('/hello', (requ, res) => {
 
 app.post('/api/register', async (requ, res) => {
     try {
-        const { roomId,
+        const { 
             username,
             email,
             password,
-            role, } = requ.body;
+             } = requ.body;
         await User.create({
-            roomId,
+            
             username,
             email,
             password,
-            role,
+            
         })
         res.json({ status: 'ok', user: true, message: 'Registered Successfully' })
 
@@ -135,8 +135,53 @@ app.post('/api/quote', async(req, res)=>{
 })
 
 
+app.get('api/get-code/:roomId', async(req, res) =>{
+    const token = req.headers['x-access-token']
+    const { roomId } = req.params;
 
+    try {
 
+        const decoded = jwt.verify(token, 'CDE@297');
+        const email = decoded.email;
+        const user = await User.findOne({email: email});
+
+        if(user){
+            const code = user.codeSnippets.get(roomId);
+            return res.json({status:'ok', code: code || ''});
+        }
+        else{
+            res.json({status: 'error', error: 'User not found'})
+        }
+        
+        
+    } catch (error) {
+
+        console.log(error)
+        res.json({status: 'error', error: 'INVALID TOKEN'})
+        
+    }
+})
+
+app.post('/api/save-code', async (req, res) =>{
+    const token = req.headers['x-access-token']
+    const { roomId, code } = req.body;
+
+    try{
+        const decoded = jwt.verify(token, 'CDE@297');
+        const email = decoded.email;
+        await User.updateOne(
+            {email: email},
+            {$set: { [`codeSnippets.${roomId}`]: code}}
+        );
+
+        return res.json({status: 'ok', message: 'Code Saved Successfully'});
+    }
+
+    catch(error){
+        console.log(error)
+        res.json({status: 'error', error: 'INVALID TOKEN'})
+    }
+})
 
 
 app.use(cors({
