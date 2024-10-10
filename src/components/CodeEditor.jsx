@@ -152,13 +152,14 @@ const CodeEditor = () => {
 
             const data = await response.json();
 
-            if(data.status === 'ok')
+            if(data.status === 'ok' && data.code)
             {
-
-                
                 setvalue(data.code);
-                valueRef.current = data.code;
-                editorRef.current.setValue(data.code);
+
+                if(editorRef.current){
+                    editorRef.current.setValue(data.code);
+                }
+                
             }
 
 
@@ -194,6 +195,10 @@ const CodeEditor = () => {
     const onMount = (editor) => {
         editorRef.current = editor;
         editor.focus();
+
+        if(value){
+            editor.setValue(value);
+        }
 
         const throttledEmit = throttle((codeValue) => {
             if (socketRef.current) {
@@ -239,6 +244,7 @@ const CodeEditor = () => {
     const onChange = (value) => {
         valueRef.current = value;
         setvalue(value);
+        
         if (socketRef.current) {
             socketRef.current.emit('code-change', {
                 roomId,
