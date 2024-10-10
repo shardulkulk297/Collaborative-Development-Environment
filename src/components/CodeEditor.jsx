@@ -154,6 +154,8 @@ const CodeEditor = () => {
 
             if(data.status === 'ok')
             {
+
+                
                 setvalue(data.code);
                 valueRef.current = data.code;
                 editorRef.current.setValue(data.code);
@@ -261,16 +263,31 @@ const CodeEditor = () => {
 
         const code = valueRef.current;
 
-        await fetch('http://localhost:5000/api/save-code'),{
+        const response = await fetch('http://localhost:5000/api/save-code', {
             method: 'POST',
-            headers:{
+            headers: {
+
                 'Content-type': 'application/json',
                 'x-access-token': localStorage.getItem('token'),
+
             },
             body:JSON.stringify({roomId, code})
-        }
+        })
+
+
+       if(response.ok){
+        navigate('/');
+
+
+       }
+
+       else{
+        const errorData = await response.json();
+        console.log("ERROR SAVING CODE", errorData);
+       }
         
-        navigate("/");
+        
+        
     }
 
     return (

@@ -135,9 +135,10 @@ app.post('/api/quote', async(req, res)=>{
 })
 
 
-app.get('api/get-code/:roomId', async(req, res) =>{
+app.get('/api/get-code/:roomId', async(req, res) =>{
     const token = req.headers['x-access-token']
     const { roomId } = req.params;
+    console.log(`RECEIVED REQ FOR roomId: ${roomId}`)
 
     try {
 
@@ -163,6 +164,7 @@ app.get('api/get-code/:roomId', async(req, res) =>{
 })
 
 app.post('/api/save-code', async (req, res) =>{
+    console.log("REQ Received for saving the code", req.body);
     const token = req.headers['x-access-token']
     const { roomId, code } = req.body;
 
@@ -179,7 +181,7 @@ app.post('/api/save-code', async (req, res) =>{
 
     catch(error){
         console.log(error)
-        res.json({status: 'error', error: 'INVALID TOKEN'})
+        return res.json({status: 'error', error: 'INVALID TOKEN'})
     }
 })
 
