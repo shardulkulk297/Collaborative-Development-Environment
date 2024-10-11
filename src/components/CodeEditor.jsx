@@ -12,6 +12,7 @@ import { initSocket } from '../socket'
 import toast from 'react-hot-toast'
 import { throttle } from 'lodash'
 import { jwtDecode } from "jwt-decode";
+import { debounce } from 'lodash'
 
 
 
@@ -43,6 +44,12 @@ const CodeEditor = () => {
 
     }
 
+    const handleError = (e) => {
+        console.log('socket error=>', e);
+        toast.error("socket connection failed");
+        navigate("/");
+    }
+
 
 
 
@@ -54,7 +61,7 @@ const CodeEditor = () => {
 
             try {
 
-                const user =  jwtDecode(token);
+                const user = jwtDecode(token);
 
                 if (!user) {
                     localStorage.removeItem('token')
@@ -66,14 +73,16 @@ const CodeEditor = () => {
 
             }
 
-            catch(error){
+            catch (error) {
                 console.log('Invalid token', error);
                 navigate('/')
             }
-            
+
 
 
         }
+        
+        
 
 
 
@@ -90,11 +99,6 @@ const CodeEditor = () => {
                 handleError(err);
             })
 
-            const handleError = (e) => {
-                console.log('socket error=>', e);
-                toast.error("socket connection failed");
-                navigate("/");
-            }
             socketRef.current.emit('join', {
                 roomId,
                 username: location.state?.username,
@@ -110,6 +114,10 @@ const CodeEditor = () => {
 
                 setclients(clients);
 
+                //sending latest code to newly joined User
+
+                
+
             });
 
             //disconnecting the users
@@ -124,65 +132,58 @@ const CodeEditor = () => {
             })
 
             socketRef.current.on('code-change', ({ code }) => {
-                // if (editorRef.current) {
-                //     const currentValue = editorRef.current.getValue();
-                //     if (code !== currentValue) {
-                //         editorRef.current.setValue(code);
-                //         valueRef.current = code;
-                //     }
-                // }
-
-                if( code!==undefined && typeof code === 'string'){
-                    setvalue(code);
-                    if(editorRef.current){
+                console.log("Received Code change", code);
+                if (editorRef.current) {
+                    const currentValue = editorRef.current.getValue();
+                    if (code !== currentValue) {
                         editorRef.current.setValue(code);
+                        valueRef.current = code;
+                        setvalue(code);
                     }
                 }
+
+
             });
 
             // Sync code when a new user joins
             socketRef.current.on('sync-code', ({ code }) => {
-                // if (editorRef.current && code !== undefined && typeof code === 'string') {
-                    
-                //     const currentValue = editorRef.current.getValue();
-                //     if (code !== currentValue) {
-                //         editorRef.current.setValue(code);
-                //         valueRef.current = code;
-                //     }
-                // }
+                if (editorRef.current && code !== undefined && typeof code === 'string') {
 
-                if(code!==undefined && typeof code === 'string')
-                {
-                    setvalue(code);
-                    if(editorRef.current){
+                    const currentValue = editorRef.current.getValue();
+                    if (code !== currentValue) {
                         editorRef.current.setValue(code);
+                        valueRef.current = code;
+                        setvalue(code)
                     }
                 }
+
+
             });
 
-            const fetchIntialCode = async ()=>{
-                try{
+            const fetchIntialCode = async () => {
+                try {
                     const response = await fetch(`http://localhost:5000/api/get-code/${roomId}`, {
-                        headers:{
+                        headers: {
                             'x-access-token': localStorage.getItem('token'),
                         }
                     })
-        
+
                     const data = await response.json();
-        
-                    if(data.status === 'ok' && data.code)
-                    {
-                        setvalue(data.code);
-        
-                        if(editorRef.current){
+
+                    if (data.status === 'ok' && data.code) {
+                        
+
+                        if (editorRef.current) {
                             editorRef.current.setValue(data.code);
                         }
-                        
-                        socketRef.current.emit('code-change', {roomId , code: data.code})
+
+                        setvalue(data.code);
+
+                        socketRef.current.emit('code-change', { roomId, code: data.code })
                     }
 
                 }
-                catch(error){
+                catch (error) {
                     console.log("Error Fetching Code:", error);
 
                 }
@@ -190,26 +191,35 @@ const CodeEditor = () => {
 
             fetchIntialCode();
 
-           
 
 
-            
-            
-            
+
+
+
+
 
         };
 
         init()
 
         return () => {
-            socketRef.current.disconnect();
-            socketRef.current.off('join');
-            socketRef.current.off('disconnected');
-            socketRef.current.off('code-change');
-            socketRef.current.off('sync-code');
+
+            if (socketRef.current) {
+                socketRef.current.off("connect_error", handleError);
+                socketRef.current.off("connect_failed", handleError);
+                socketRef.current.off("joined");
+                
+                socketRef.current.off('join');
+                socketRef.current.off('disconnected');
+                socketRef.current.off('code-change');
+                socketRef.current.off('sync-code');
+                socketRef.current.disconnect();
+
+            }
+
         };
 
-    }, [roomId, location.state, navigate]);
+    }, []);
 
 
 
@@ -222,13 +232,31 @@ const CodeEditor = () => {
         return <Navigate to="/" />
     }
 
+   
+
     const onMount = (editor) => {
         editorRef.current = editor;
         editor.focus();
 
-        if(value){
+        if (value) {
             editor.setValue(value);
         }
+
+        editor.onDidChangeModelContent((event) => {
+            const codeValue = editor.getValue();
+                    valueRef.current = codeValue
+                    throttledEmit(codeValue);
+        
+                    const { origin } = codeValue;
+                    const code = codeValue
+        
+        
+                    const newValue = editor.getValue();
+                    onChange(newValue);
+        });
+
+
+    }
 
         const throttledEmit = throttle((codeValue) => {
             if (socketRef.current) {
@@ -239,25 +267,13 @@ const CodeEditor = () => {
             }
         }, 1000);
 
-        editor.onDidChangeModelContent((event) => {
-            const codeValue = editor.getValue();
-            valueRef.current = codeValue
-            throttledEmit(codeValue);
+    //     editor.onDidChangeModelContent((event) => {
+    //        
 
-            const { origin } = codeValue;
-            // const code = codeValue
+    //     });
+    // };
 
-            if (socketRef.current) {
-                socketRef.current.emit('code-change', {
-                    roomId,
-                    code: codeValue
-
-                })
-            }
-
-
-        });
-    };
+   
 
     const onSelect = (language) => {
         setlanguage(language);
@@ -267,22 +283,27 @@ const CodeEditor = () => {
 
     }
 
-    const throttledEmit = throttle((code) => {
-        socketRef.current.emit('code-change', { roomId, code });
-    }, 1000);
 
     const onChange = (value) => {
-        valueRef.current = value;
-        setvalue(value);
-        
-        if (socketRef.current) {
-            socketRef.current.emit('code-change', {
-                roomId,
-                code: value,
-            });
-        }
 
-        throttledEmit(value);
+        if(value !== valueRef.current){
+            console.log("code changed");
+            valueRef.current = value;
+            setvalue(value);
+            throttledEmit(value);
+            
+        }
+        
+
+        // if (socketRef.current) {
+        //     socketRef.current.emit('code-change', {
+        //         roomId,
+        //         code: value,
+        //     });
+        // }
+
+        
+        //throttleEmit(value);
     };
 
     const copyRoomId = async () => {
@@ -307,23 +328,23 @@ const CodeEditor = () => {
                 'x-access-token': localStorage.getItem('token'),
 
             },
-            body:JSON.stringify({roomId, code})
+            body: JSON.stringify({ roomId, code })
         })
 
 
-       if(response.ok){
-        navigate('/');
+        if (response.ok) {
+            navigate('/');
 
 
-       }
+        }
 
-       else{
-        const errorData = await response.json();
-        console.log("ERROR SAVING CODE", errorData);
-       }
-        
-        
-        
+        else {
+            const errorData = await response.json();
+            console.log("ERROR SAVING CODE", errorData);
+        }
+
+
+
     }
 
     return (

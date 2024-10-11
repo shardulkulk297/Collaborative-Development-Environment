@@ -253,19 +253,14 @@ io.on('connection', (socket) => {
         })
 
         //sending the latest code to the newly joined user
-        const latestCode = roomCodeMap[roomId] || ''; 
-        socket.emit('sync-code', {code: latestCode});
+        const latestCode = roomCodeMap[roomId] || '';
+        
+            console.log(latestCode)
+            socket.emit('sync-code', {code: latestCode});
 
-        // io.to(socket.id).emit('sync-code', { code: latestCode });
-        // socket.to(roomId).emit('code-change', { code: latestCode });
+        
 
-
-        // const [firstClient] = clients;
-        // if (firstClient) {
-        //     io.to(socket.id).emit('sync-code', {
-        //         code: firstClient.code,
-        //     });
-        // }
+        
 
 
 
@@ -275,6 +270,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('code-change', ({ roomId, code }) => {
+        console.log(`Code changed in room ${roomId}: ${code}`);
         roomCodeMap[roomId] = code;
         socket.in(roomId).emit('code-change', { code })
         // const clients = getAllConnectedClients(roomId);
@@ -299,6 +295,11 @@ io.on('connection', (socket) => {
         delete userSocketMap[socket.id];
         socket.leave();
     })
+
+    socket.on('error', (error) => {
+        console.error('Socket error:', error); // Log socket errors
+    });
+    
 
     //disconnected users 
 
