@@ -235,14 +235,14 @@ const getAllConnectedClients = (roomId) => {
 
 
 io.on('connection', (socket) => {
-    // console.log(`User connected: ${socket.id}`);
+
 
     socket.on('join', ({ roomId, username }) => {
 
         userSocketMap[socket.id] = username;
         socket.join(roomId);
         const clients = getAllConnectedClients(roomId);
-        // console.log(clients);
+    
         //notify to all users that new users have joined
         clients.forEach(({ socketId }) => {
             io.to(socketId).emit('joined', {
@@ -252,33 +252,35 @@ io.on('connection', (socket) => {
             })
         })
 
+        //sending the latest code to the newly joined user
+        const latestCode = roomCodeMap[roomId] || ''; 
+        socket.emit('sync-code', {code: latestCode});
 
-        const latestCode = roomCodeMap[roomId] || '';  // Default to empty if no code is set
-        io.to(socket.id).emit('sync-code', { code: latestCode });
-        socket.to(roomId).emit('code-change', { code: latestCode });
-
-
-        const [firstClient] = clients;
-        if (firstClient) {
-            io.to(socket.id).emit('sync-code', {
-                code: firstClient.code,
-            });
-        }
+        // io.to(socket.id).emit('sync-code', { code: latestCode });
+        // socket.to(roomId).emit('code-change', { code: latestCode });
 
 
+        // const [firstClient] = clients;
+        // if (firstClient) {
+        //     io.to(socket.id).emit('sync-code', {
+        //         code: firstClient.code,
+        //     });
+        // }
 
 
 
 
-    })
+
+
+    });
 
     socket.on('code-change', ({ roomId, code }) => {
         roomCodeMap[roomId] = code;
         socket.in(roomId).emit('code-change', { code })
-        const clients = getAllConnectedClients(roomId);
-        if (clients.length > 0) {
-            clients[0].code = code;
-        }
+        // const clients = getAllConnectedClients(roomId);
+        // if (clients.length > 0) {
+        //     clients[0].code = code;
+        // }
     });
 
     socket.on("sync-code", ({ socketId, code }) => {

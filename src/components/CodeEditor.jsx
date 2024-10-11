@@ -114,7 +114,8 @@ const CodeEditor = () => {
 
             //disconnecting the users
 
-            socketRef.current.on('disconnected', ({ socketId, username, }) => {
+            socketRef.current.on('disconnected', async ({ socketId, username, }) => {
+
                 toast.success(`${username} left the room`);
                 setclients((prev) => {
                     return prev.filter((client) => client.socketId !== socketId);
@@ -123,44 +124,73 @@ const CodeEditor = () => {
             })
 
             socketRef.current.on('code-change', ({ code }) => {
-                if (editorRef.current) {
-                    const currentValue = editorRef.current.getValue();
-                    if (code !== currentValue) {
+                // if (editorRef.current) {
+                //     const currentValue = editorRef.current.getValue();
+                //     if (code !== currentValue) {
+                //         editorRef.current.setValue(code);
+                //         valueRef.current = code;
+                //     }
+                // }
+
+                if( code!==undefined && typeof code === 'string'){
+                    setvalue(code);
+                    if(editorRef.current){
                         editorRef.current.setValue(code);
-                        valueRef.current = code;
                     }
                 }
             });
 
             // Sync code when a new user joins
             socketRef.current.on('sync-code', ({ code }) => {
-                if (editorRef.current && code !== undefined && typeof code === 'string') {
-                    // Update the editor's value and ref value if needed
-                    const currentValue = editorRef.current.getValue();
-                    if (code !== currentValue) {
+                // if (editorRef.current && code !== undefined && typeof code === 'string') {
+                    
+                //     const currentValue = editorRef.current.getValue();
+                //     if (code !== currentValue) {
+                //         editorRef.current.setValue(code);
+                //         valueRef.current = code;
+                //     }
+                // }
+
+                if(code!==undefined && typeof code === 'string')
+                {
+                    setvalue(code);
+                    if(editorRef.current){
                         editorRef.current.setValue(code);
-                        valueRef.current = code;
                     }
                 }
             });
 
-            const response = await fetch(`http://localhost:5000/api/get-code/${roomId}`, {
-                headers:{
-                    'x-access-token': localStorage.getItem('token'),
+            const fetchIntialCode = async ()=>{
+                try{
+                    const response = await fetch(`http://localhost:5000/api/get-code/${roomId}`, {
+                        headers:{
+                            'x-access-token': localStorage.getItem('token'),
+                        }
+                    })
+        
+                    const data = await response.json();
+        
+                    if(data.status === 'ok' && data.code)
+                    {
+                        setvalue(data.code);
+        
+                        if(editorRef.current){
+                            editorRef.current.setValue(data.code);
+                        }
+                        
+                        socketRef.current.emit('code-change', {roomId , code: data.code})
+                    }
+
                 }
-            })
+                catch(error){
+                    console.log("Error Fetching Code:", error);
 
-            const data = await response.json();
-
-            if(data.status === 'ok' && data.code)
-            {
-                setvalue(data.code);
-
-                if(editorRef.current){
-                    editorRef.current.setValue(data.code);
                 }
-                
-            }
+            };
+
+            fetchIntialCode();
+
+           
 
 
             
@@ -179,7 +209,7 @@ const CodeEditor = () => {
             socketRef.current.off('sync-code');
         };
 
-    }, [])
+    }, [roomId, location.state, navigate]);
 
 
 
