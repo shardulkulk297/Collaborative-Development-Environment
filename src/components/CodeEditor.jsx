@@ -124,11 +124,44 @@ const CodeEditor = () => {
 
             socketRef.current.on('disconnected', async ({ socketId, username, }) => {
 
+                
                 toast.success(`${username} left the room`);
                 setclients((prev) => {
                     return prev.filter((client) => client.socketId !== socketId);
                 })
 
+            })
+
+            socketRef.current.on('disconnect', async()=>{
+                toast.error("DISCONNECTED From Server");
+
+
+                try{
+                    const response = await fetch('https://localhost:5000/api/save-code-on-disconnect', {
+                        method: 'POST',
+                        headers:{
+                            'Content-Type': 'application/json',
+                            'x-access-token':
+                            localStorage.getItem('token'),
+
+                        },
+
+                        body: JSON.stringify({
+                            roomId,
+                            code: valueRef.current,
+                            email: jwtDecode(localStorage.getItem('token')).email
+                        })
+                    })
+
+                    if(!response.ok){
+                        throw new Error('Failed to save code on disconnect')
+                    }
+
+                }
+                catch(error){
+                    console.error("ERROR SAVING CODE", error)
+
+                }
             })
 
             socketRef.current.on('code-change', ({ code }) => {

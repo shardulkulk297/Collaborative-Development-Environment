@@ -185,6 +185,25 @@ app.post('/api/save-code', async (req, res) =>{
     }
 })
 
+app.post('/api/save-code-on-disconnect', async (req, res) =>{
+    const {roomId, code, email} = req.body;
+
+    try{
+        await user.updateOne(
+            
+            {email: email},
+            {$set: {[`codeSnippets.${roomId}`]: code}}
+        )
+
+        res.json({status: 'ok', message:"Code saved On disconnect"});
+    }
+
+    catch(error){
+        console.error("ERROR SAVING THE CODE ON DISCONNECT", error)
+        res.status(500).json({status: 'error', message: 'FAILED TO SAVE THE CODE ON DISCONNECT'})
+    }
+})
+
 
 app.use(cors({
     origin: "*",
@@ -285,7 +304,23 @@ io.on('connection', (socket) => {
 
     socket.on('disconnecting', () => {
         const rooms = [...socket.rooms];
-        rooms.forEach((roomId) => {
+        rooms.forEach( async (roomId) => {
+
+            if(roomId !== socket.id){
+                const username = userSocketMap[socket.id]
+                const user = await User.findOne({username});
+
+                if(user){
+                    const code = roomCodeMap[roomId] || '';
+                    await User.updateOne(
+                        {username},
+                        {$set: { [`codeSnippets.${roomId}`]: code}}
+                    )
+                }
+            }
+
+
+
             socket.in(roomId).emit('disconnected', {
                 socketId: socket.id,
                 username: userSocketMap[socket.id]
