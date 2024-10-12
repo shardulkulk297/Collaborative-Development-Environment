@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Box, Button, Text, VStack, Input, Image, useColorModeValue } from '@chakra-ui/react';
 import { MessageCircle, X, Send, Image as ImageIcon } from 'lucide-react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
 
 // Initialize the AI model using Vite's environment variable syntax
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
@@ -23,7 +24,7 @@ const ChatBot = () => {
   const userMsgColor = useColorModeValue("white", "gray.800");
   const aiMsgBg = useColorModeValue("gray.200", "gray.600");
   const aiMsgColor = useColorModeValue("black", "white");
-
+  const explanationBg = useColorModeValue("blue.50", "gray.800");
   const toggleChat = () => setIsOpen(!isOpen);
 
   const handleSend = async () => {
@@ -78,58 +79,78 @@ const ChatBot = () => {
     });
   };
 
-  const renderMessage = (msg) => {
+   const renderMessage = (msg) => {
     const codeRegex = /```(\w+)?\n([\s\S]*?)```/g;
+    const explanationRegex = /\*\*Explanation:\*\*([\s\S]*?)(?=\n\n|$)/g;
     const parts = [];
     let lastIndex = 0;
     let match;
 
     while ((match = codeRegex.exec(msg.content)) !== null) {
       if (match.index > lastIndex) {
-        parts.push(msg.content.slice(lastIndex, match.index));
+        parts.push(renderTextWithExplanations(msg.content.slice(lastIndex, match.index)));
       }
       const language = match[1] || 'javascript';
       const code = match[2].trim();
       parts.push(
-        <SyntaxHighlighter 
-          language={language} 
-          style={tomorrow}
-          customStyle={{
-            margin: '10px 0',
-            borderRadius: '4px',
-            maxWidth: '100%',
-            overflowX: 'auto'
-          }}
-        >
-          {code}
-        </SyntaxHighlighter>
+        <Box key={match.index} width="100%" my={2}>
+          <SyntaxHighlighter 
+            language={language} 
+            style={vscDarkPlus}
+            customStyle={{
+              margin: '0',
+              borderRadius: '4px',
+              maxWidth: '100%',
+            }}
+            wrapLines={true}
+            wrapLongLines={true}
+          >
+            {code}
+          </SyntaxHighlighter>
+        </Box>
       );
       lastIndex = match.index + match[0].length;
     }
 
     if (lastIndex < msg.content.length) {
-      parts.push(msg.content.slice(lastIndex));
+      parts.push(renderTextWithExplanations(msg.content.slice(lastIndex)));
     }
 
-    return (
-      <Box
-        bg={msg.type === 'user' ? userMsgBg : aiMsgBg}
-        color={msg.type === 'user' ? userMsgColor : aiMsgColor}
-        px={3}
-        py={2}
-        borderRadius="lg"
-        maxWidth="80%"
-        overflowX="auto"
-      >
-        {parts.map((part, index) => 
-          typeof part === 'string' ? (
-            <Text key={index} whiteSpace="pre-wrap">{part}</Text>
-          ) : (
-            <Box key={index}>{part}</Box>
-          )
-        )}
-      </Box>
-    );
+    return parts;
+  };
+
+  const renderTextWithExplanations = (text) => {
+    const explanationRegex = /\*\*Explanation:\*\*([\s\S]*?)(?=\n\n|$)/g;
+    const textParts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = explanationRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        textParts.push(
+          <Text key={`text-${lastIndex}`} whiteSpace="pre-wrap">
+            {text.slice(lastIndex, match.index)}
+          </Text>
+        );
+      }
+      textParts.push(
+        <Box key={`explanation-${match.index}`} bg={explanationBg} p={2} borderRadius="md" my={2}>
+          <Text fontWeight="bold">Explanation:</Text>
+          <Text whiteSpace="pre-wrap">{match[1].trim()}</Text>
+        </Box>
+      );
+      lastIndex = match.index + match[0].length;
+    }
+
+    if (lastIndex < text.length) {
+      textParts.push(
+        <Text key={`text-${lastIndex}`} whiteSpace="pre-wrap">
+          {text.slice(lastIndex)}
+        </Text>
+      );
+    }
+
+    return textParts;
   };
 
   return (
@@ -161,7 +182,18 @@ const ChatBot = () => {
           >
             {messages.map((msg, index) => (
               <Box key={index} mb={4} textAlign={msg.type === 'user' ? 'right' : 'left'}>
-                {renderMessage(msg)}
+                <Box
+                  bg={msg.type === 'user' ? userMsgBg : aiMsgBg}
+                  color={msg.type === 'user' ? userMsgColor : aiMsgColor}
+                  px={3}
+                  py={2}
+                  borderRadius="lg"
+                  maxWidth="100%"
+                  display="inline-block"
+                  textAlign="left"
+                >
+                  {renderMessage(msg)}
+                </Box>
               </Box>
             ))}
             {selectedImage && (
