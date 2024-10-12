@@ -257,7 +257,7 @@ io.on('connection', (socket) => {
 
 
     socket.on('join', ({ roomId, username }) => {
-
+        console.log("Mapping socketId to username:", socket.id, username);
         userSocketMap[socket.id] = username;
         socket.join(roomId);
         const clients = getAllConnectedClients(roomId);
@@ -304,10 +304,22 @@ io.on('connection', (socket) => {
 
     socket.on('disconnecting', () => {
         const rooms = [...socket.rooms];
+        const username = userSocketMap[socket.id];
+
+        if(!username){
+            console.error("USERNAME NOT FOUND");
+            return;
+        }
+
+    
         rooms.forEach( async (roomId) => {
 
+            try{
+
+            
+
             if(roomId !== socket.id){
-                const username = userSocketMap[socket.id]
+                
                 const user = await User.findOne({username});
 
                 if(user){
@@ -316,15 +328,28 @@ io.on('connection', (socket) => {
                         {username},
                         {$set: { [`codeSnippets.${roomId}`]: code}}
                     )
+                    
                 }
             }
+        
+            
 
+            
+        
+                socket.in(roomId).emit('disconnected', {
+                    socketId: socket.id,
+                    username: username,
+                });
 
+            }
+            catch(error){
+                console.error("ERROR IN DISCONNECTION", error);
+            }
+        
+            
+            
 
-            socket.in(roomId).emit('disconnected', {
-                socketId: socket.id,
-                username: userSocketMap[socket.id]
-            })
+        
         })
 
         delete userSocketMap[socket.id];
