@@ -14,6 +14,7 @@ import { throttle } from 'lodash'
 import { jwtDecode } from "jwt-decode";
 import { debounce } from 'lodash'
 import ChatBot from './chatBot'
+import Tutorial from './Tutorial' 
 
 
 
@@ -30,6 +31,8 @@ const CodeEditor = () => {
     const location = useLocation();
     const { roomId } = useParams();
     const navigate = useNavigate();
+    const [showTutorial, setShowTutorial] = useState(true);
+
 
 
     const saveToken = async () => {
@@ -57,6 +60,7 @@ const CodeEditor = () => {
     useEffect(() => {
 
         const token = localStorage.getItem('token')
+        const tutorialCompleted = localStorage.getItem('tutorialCompleted');
 
         if (token) {
 
@@ -69,7 +73,10 @@ const CodeEditor = () => {
                     navigate('/')
                 }
                 else {
+                    
                     saveToken()
+                    setShowTutorial(true);
+
                 }
 
             }
@@ -266,7 +273,9 @@ const CodeEditor = () => {
         return <Navigate to="/" />
     }
 
-   
+    const handleTutorialComplete = () => {
+        setShowTutorial(false);
+    };
 
     const onMount = (editor) => {
         editorRef.current = editor;
@@ -382,7 +391,9 @@ const CodeEditor = () => {
     }
 
     return (
+        <ChakraProvider>
         <div className="container-fluid vh-100">
+        {showTutorial && <Tutorial onComplete={handleTutorialComplete} />}
             <div className="row h-100">
                 <div className="col-md-2  text-gray-200  flex flex-col h-screen m-0 p-0" style={{ boxShadow: "2px 0px 4px rgba(0,0,0,0.1)" }}>
                     <div className='font-semibold text-lg flex flex-col flex-grow'>
@@ -465,6 +476,7 @@ const CodeEditor = () => {
             <ChatBot />
 
         </div>
+        </ChakraProvider>
 
 
 
