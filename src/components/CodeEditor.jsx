@@ -13,6 +13,7 @@ import toast from 'react-hot-toast'
 import { throttle } from 'lodash'
 import { jwtDecode } from "jwt-decode";
 import { debounce } from 'lodash'
+import ChatBot from './chatBot'
 
 
 
@@ -460,6 +461,8 @@ const CodeEditor = () => {
 
                 </div>
             </div>
+
+            <ChatBot />
 
         </div>
 
