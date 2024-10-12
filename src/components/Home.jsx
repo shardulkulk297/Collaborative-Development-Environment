@@ -62,7 +62,11 @@ const Home = () => {
       toast.success('Registration Successful');
       joinRoom();
     } else {
-      toast.error('Fill Everything');
+      if (data.error && Array.isArray(data.error)) {
+        data.error.forEach(errorMessage => toast.error(errorMessage));
+    } else {
+        toast.error('Check for existing credentials or try again later');
+    }
     }
 
   }
@@ -96,7 +100,11 @@ const Home = () => {
       //redirect user to the code editor
       joinRoom();
     } else {
-      toast.error('Invalid credentials');
+      if (data.error && Array.isArray(data.error)) {
+        data.error.forEach(errorMessage => toast.error(errorMessage));
+    } else {
+        toast.error('Invalid credentials. Please try again.');
+    }
     }
 
   }

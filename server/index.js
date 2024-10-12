@@ -49,7 +49,14 @@ app.post('/api/register', async (requ, res) => {
     }
 
     catch (err) {
-        res.json({ status: 'error', error: 'Duplicate Email' })
+        if (err.name === 'ValidationError') {
+            const errorMessages = Object.values(err.errors).map(error => error.message);
+            res.status(400).json({ status: 'error', error: errorMessages });
+        } else if (err.code === 11000) { 
+            res.status(400).json({ status: 'error', error: ['Email already exists'] });
+        } else {
+            res.status(500).json({ status: 'error', error: 'An unexpected error occurred' });
+        }
         console.log(err);
     }
 
@@ -95,7 +102,7 @@ app.post('/api/login', async (requ, res) => {
     }
 
     catch (err) {
-        res.json({ status: 'error', error: 'Duplicate Email or error' })
+        res.status(500).json({ status: 'error', error: 'An unexpected error occurred' });
         console.log(err);
     }
 
