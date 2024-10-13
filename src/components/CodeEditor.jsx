@@ -14,8 +14,8 @@ import { throttle } from 'lodash'
 import { jwtDecode } from "jwt-decode";
 import { debounce } from 'lodash'
 import ChatBot from './chatBot'
-import Tutorial from './Tutorial' 
-
+import Tutorial from './Tutorial'
+import ChatModule from './ChatModule';
 
 
 
@@ -32,6 +32,7 @@ const CodeEditor = () => {
     const { roomId } = useParams();
     const navigate = useNavigate();
     const [showTutorial, setShowTutorial] = useState(true);
+   
 
 
 
@@ -73,7 +74,7 @@ const CodeEditor = () => {
                     navigate('/')
                 }
                 else {
-                    
+
                     saveToken()
                     setShowTutorial(true);
 
@@ -89,8 +90,8 @@ const CodeEditor = () => {
 
 
         }
-        
-        
+
+
 
 
 
@@ -124,15 +125,19 @@ const CodeEditor = () => {
 
                 //sending latest code to newly joined User
 
-                
+
 
             });
+
+          
+
+
 
             //disconnecting the users
 
             socketRef.current.on('disconnected', async ({ socketId, username, }) => {
 
-                
+
                 toast.success(`${username} left the room`);
                 setclients((prev) => {
                     return prev.filter((client) => client.socketId !== socketId);
@@ -140,17 +145,17 @@ const CodeEditor = () => {
 
             })
 
-            socketRef.current.on('disconnect', async()=>{
+            socketRef.current.on('disconnect', async () => {
                 toast.error("DISCONNECTED From Server");
 
 
-                try{
-                    const response = await fetch('https://localhost:5000/api/save-code-on-disconnect', {
+                try {
+                    const response = await fetch('http://localhost:5000/api/save-code-on-disconnect', {
                         method: 'POST',
-                        headers:{
+                        headers: {
                             'Content-Type': 'application/json',
                             'x-access-token':
-                            localStorage.getItem('token'),
+                                localStorage.getItem('token'),
 
                         },
 
@@ -161,12 +166,12 @@ const CodeEditor = () => {
                         })
                     })
 
-                    if(!response.ok){
+                    if (!response.ok) {
                         throw new Error('Failed to save code on disconnect')
                     }
 
                 }
-                catch(error){
+                catch (error) {
                     console.error("ERROR SAVING CODE", error)
 
                 }
@@ -212,7 +217,7 @@ const CodeEditor = () => {
                     const data = await response.json();
 
                     if (data.status === 'ok' && data.code) {
-                        
+
 
                         if (editorRef.current) {
                             editorRef.current.setValue(data.code);
@@ -249,11 +254,12 @@ const CodeEditor = () => {
                 socketRef.current.off("connect_error", handleError);
                 socketRef.current.off("connect_failed", handleError);
                 socketRef.current.off("joined");
-                
+
                 socketRef.current.off('join');
                 socketRef.current.off('disconnected');
                 socketRef.current.off('code-change');
                 socketRef.current.off('sync-code');
+                
                 socketRef.current.disconnect();
 
             }
@@ -286,29 +292,33 @@ const CodeEditor = () => {
         }
 
         editor.onDidChangeModelContent((event) => {
+
+           
             const codeValue = editor.getValue();
-                    valueRef.current = codeValue
-                    throttledEmit(codeValue);
-        
-                    const { origin } = codeValue;
-                    const code = codeValue
-        
-        
-                    const newValue = editor.getValue();
-                    onChange(newValue);
+            valueRef.current = codeValue
+            throttledEmit(codeValue);
+
+            const { origin } = codeValue;
+            const code = codeValue
+
+
+            const newValue = editor.getValue();
+            onChange(newValue);
         });
+
+      
 
 
     }
 
-        const throttledEmit = throttle((codeValue) => {
-            if (socketRef.current) {
-                socketRef.current.emit('code-change', {
-                    roomId,
-                    code: codeValue,
-                });
-            }
-        }, 1000);
+    const throttledEmit = throttle((codeValue) => {
+        if (socketRef.current) {
+            socketRef.current.emit('code-change', {
+                roomId,
+                code: codeValue,
+            });
+        }
+    }, 1000);
 
     //     editor.onDidChangeModelContent((event) => {
     //        
@@ -316,7 +326,7 @@ const CodeEditor = () => {
     //     });
     // };
 
-   
+
 
     const onSelect = (language) => {
         setlanguage(language);
@@ -329,14 +339,14 @@ const CodeEditor = () => {
 
     const onChange = (value) => {
 
-        if(value !== valueRef.current){
+        if (value !== valueRef.current) {
             console.log("code changed");
             valueRef.current = value;
             setvalue(value);
             throttledEmit(value);
-            
+
         }
-        
+
 
         // if (socketRef.current) {
         //     socketRef.current.emit('code-change', {
@@ -345,7 +355,7 @@ const CodeEditor = () => {
         //     });
         // }
 
-        
+
         //throttleEmit(value);
     };
 
@@ -392,90 +402,94 @@ const CodeEditor = () => {
 
     return (
         <ChakraProvider>
-        <div className="container-fluid vh-100">
-        {showTutorial && <Tutorial onComplete={handleTutorialComplete} />}
-            <div className="row h-100">
-                <div className="col-md-2  text-gray-200  flex flex-col h-screen m-0 p-0" style={{ boxShadow: "2px 0px 4px rgba(0,0,0,0.1)" }}>
-                    <div className='font-semibold text-lg flex flex-col flex-grow'>
+            <div className="container-fluid vh-100">
+                {showTutorial && <Tutorial onComplete={handleTutorialComplete} />}
+                <div className="row h-100">
+                    <div className="col-md-2  text-gray-200  flex flex-col h-screen m-0 p-0" style={{ boxShadow: "2px 0px 4px rgba(0,0,0,0.1)" }}>
+                        <div className='font-semibold text-lg flex flex-col flex-grow'>
 
-                        <div className='flex justify-center items-center p-1'>
+                            <div className='flex justify-center items-center p-1'>
 
-                            <img width={40} className='invert' src="/logo.svg" alt="logo" />
-                            <h1 className='text-white font-bold text-2xl'>CDE</h1>
+                                <img width={40} className='invert' src="/logo.svg" alt="logo" />
+                                <h1 className='text-white font-bold text-2xl'>CDE</h1>
 
 
+
+                            </div>
+                            <hr style={{ marginTop: "-0rem" }} />
+
+
+
+                            <div className='flex flex-col overflow-auto custom-scrollbar'>
+
+                                {/* client lists */}
+
+                                {
+                                    clients.map((client) => (
+                                        <Client key={client.socketId} username={client.username} />
+
+                                    ))
+                                }
+
+                            </div>
+
+
+
+                            <div className='mt-auto flex flex-col p-4'>
+                                <hr className='p-2' />
+                                <button onClick={copyRoomId}
+                                    className='mb-4 px-6 py-3 bg-[#5ac18e] text-[#0f0a19] font-semibold rounded-lg shadow-md hover:bg-[#48a178] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5ac18e] transition duration-300 ease-in-out'>
+                                    Copy Room Id
+                                </button>
+
+                                <button onClick={leaveRoom}
+                                    className=' mb-4 px-6 py-3 bg-[#f01808] text-[#0f0a19] font-semibold rounded-lg shadow-md hover:bg-[#823803] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5ac18e] transition duration-300 ease-in-out'>
+                                    Save & Leave Room
+                                </button>
+
+                            </div>
 
                         </div>
-                        <hr style={{ marginTop: "-0rem" }} />
 
-
-
-                        <div className='flex flex-col overflow-auto custom-scrollbar'>
-
-                            {/* client lists */}
-
-                            {
-                                clients.map((client) => (
-                                    <Client key={client.socketId} username={client.username} />
-
-                                ))
-                            }
-
-                        </div>
-
-
-
-                        <div className='mt-auto flex flex-col p-4'>
-                            <hr className='p-2' />
-                            <button onClick={copyRoomId}
-                                className='mb-4 px-6 py-3 bg-[#5ac18e] text-[#0f0a19] font-semibold rounded-lg shadow-md hover:bg-[#48a178] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5ac18e] transition duration-300 ease-in-out'>
-                                Copy Room Id
-                            </button>
-
-                            <button onClick={leaveRoom}
-                                className=' mb-4 px-6 py-3 bg-[#f01808] text-[#0f0a19] font-semibold rounded-lg shadow-md hover:bg-[#823803] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5ac18e] transition duration-300 ease-in-out'>
-                                Save & Leave Room
-                            </button>
-
-                        </div>
 
                     </div>
 
+                    <div className="col-md-10 flex flex-col h-100">
 
+                        <Box>
+                            <HStack spacing={4}>
+                                <Box w='50%'>
+
+                                    <LanguageSelector language={language} onSelect={onSelect} />
+                                    <Editor
+                                        id="codeEditor"
+                                        height="85vh"
+                                        theme='vs-dark'
+                                        language={language} defaultValue={CODE_SNIPPETS[language]}
+                                        value={value}
+                                        onMount={onMount}
+                                        onChange={onChange}
+                                       
+                                    />;
+
+                                    
+
+                                </Box>
+
+                                <Output editorRef={editorRef} language={language} />
+                            </HStack>
+
+
+                        </Box>
+
+
+                    </div>
                 </div>
 
-                <div className="col-md-10 flex flex-col h-100">
+                <ChatBot />
+                <ChatModule socket={socketRef.current} username={location.state?.username} roomId={roomId} />
 
-                    <Box>
-                        <HStack spacing={4}>
-                            <Box w='50%'>
-
-                                <LanguageSelector language={language} onSelect={onSelect} />
-                                <Editor
-                                    id="codeEditor"
-                                    height="85vh"
-                                    theme='vs-dark'
-                                    language={language} defaultValue={CODE_SNIPPETS[language]}
-                                    value={value}
-                                    onMount={onMount}
-                                    onChange={onChange} />;
-
-
-                            </Box>
-
-                            <Output editorRef={editorRef} language={language} />
-                        </HStack>
-
-
-                    </Box>
-
-
-                </div>
             </div>
-
-            <ChatBot />
-
-        </div>
         </ChakraProvider>
 
 

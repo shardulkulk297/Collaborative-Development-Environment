@@ -247,6 +247,9 @@ const io = new Server(server, {
 
 const userSocketMap = {};
 const roomCodeMap = {};
+
+
+
 const getAllConnectedClients = (roomId) => {
     return Array.from(io.sockets.adapter.rooms.get(roomId) || []).map((socketId) => {
         return {
@@ -286,14 +289,21 @@ io.on('connection', (socket) => {
 
         
 
-        
-
+       
+        const userCount = getAllConnectedClients(roomId).length;
+        io.to(roomId).emit('user-count', userCount);
 
 
 
 
 
     });
+
+    socket.on('send-message', ({roomId, username, message}) =>{
+        io.to(roomId).emit('chat-message', {username, message});
+    })
+
+   
 
     socket.on('code-change', ({ roomId, code }) => {
         console.log(`Code changed in room ${roomId}: ${code}`);
@@ -353,6 +363,22 @@ io.on('connection', (socket) => {
                 console.error("ERROR IN DISCONNECTION", error);
             }
         
+            // Object.keys(roomEditingUser).forEach(roomId => {
+            //     if (roomEditingUser[roomId] === userSocketMap[socket.id]) {
+            //         delete roomEditingUser[roomId];
+            //         socket.to(roomId).emit('user-stopped-editing');
+            //     }
+            // });
+            const rooms = [...socket.rooms];
+            rooms.forEach((roomId) => {
+              if (roomId !== socket.id) {
+                const userCount = getAllConnectedClients(roomId).length - 1;
+                io.to(roomId).emit('user-count', userCount);
+              }
+            });
+
+            
+    
             
             
 
