@@ -213,9 +213,10 @@ app.post('/api/save-code-on-disconnect', async (req, res) =>{
 
 
 app.use(cors({
-    origin: "*",
-    methods: ["GET", "POST"],
-    credentials: true
+    origin: '*', // Allow all origins for testing purposes
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token'],
+    credentials: true,
 }))
 
 
@@ -402,8 +403,8 @@ io.on('connection', (socket) => {
 
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log('server is running'));
-
+// server.listen(PORT, () => console.log('server is running'));
+server.listen(PORT, '0.0.0.0', () => console.log(`Server is running on http://0.0.0.0:${PORT}`));
 
 
 

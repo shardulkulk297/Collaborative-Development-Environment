@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Button, Input, VStack, Text, Flex, CloseButton } from '@chakra-ui/react';
-
+import toast from 'react-hot-toast'
 const ChatModule = ({ socket, username, roomId }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
@@ -42,7 +42,7 @@ const ChatModule = ({ socket, username, roomId }) => {
 
   const toggleChat = () => {
     if (userCount <= 1) {
-      alert('Add more users to chat');
+      toast.error("Add more users to App");
     } else {
       setIsOpen(!isOpen);
     }
