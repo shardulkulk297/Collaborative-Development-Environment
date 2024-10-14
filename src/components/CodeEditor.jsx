@@ -38,7 +38,7 @@ const CodeEditor = () => {
 
     const saveToken = async () => {
 
-        const req = await fetch('http://localhost:5000/api/quote', {
+        const req = await fetch(`${import.meta.env.VITE_BACKEND_URL}api/quote`, {
             headers: {
                 'x-access-token': localStorage.getItem('token'),
             },
@@ -150,7 +150,7 @@ const CodeEditor = () => {
 
 
                 try {
-                    const response = await fetch('http://localhost:5000/api/save-code-on-disconnect', {
+                    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}api/save-code-on-disconnect`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -208,7 +208,7 @@ const CodeEditor = () => {
 
             const fetchIntialCode = async () => {
                 try {
-                    const response = await fetch(`http://localhost:5000/api/get-code/${roomId}`, {
+                    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}api/get-code/${roomId}`, {
                         headers: {
                             'x-access-token': localStorage.getItem('token'),
                         }
@@ -373,7 +373,7 @@ const CodeEditor = () => {
 
         const code = valueRef.current;
 
-        const response = await fetch('http://localhost:5000/api/save-code', {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}api/save-code`, {
             method: 'POST',
             headers: {
 

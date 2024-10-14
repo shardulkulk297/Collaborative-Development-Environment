@@ -34,7 +34,7 @@ const Home = () => {
 
     
     
-    const response = await fetch('http://localhost:5000/api/register',{
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}api/register`,{
 
       method: 'POST',
 
@@ -75,7 +75,7 @@ const Home = () => {
 
     e.preventDefault()
 
-    const response = await fetch('http://localhost:5000/api/login',{
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}api/login`,{
 
       method: 'POST',
 
