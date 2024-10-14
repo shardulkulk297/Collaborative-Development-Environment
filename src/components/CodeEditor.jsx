@@ -32,9 +32,22 @@ const CodeEditor = () => {
     const { roomId } = useParams();
     const navigate = useNavigate();
     const [showTutorial, setShowTutorial] = useState(true);
-   
+    const [isLocked, setIsLocked] = useState(false);
+    const [lockedBy, setLockedBy] = useState(null);
 
+    // Request editor lock when user starts editing
+    const requestLock = () => {
+        if (socketRef.current) {
+            socketRef.current.emit('request-lock', { roomId, username: location.state?.username });
+        }
+    };
 
+    // Release the lock when user stops editing (e.g., unfocus or leaves)
+    const releaseLock = () => {
+        if (socketRef.current) {
+            socketRef.current.emit('release-lock', { roomId, username: location.state?.username });
+        }
+    };
 
     const saveToken = async () => {
 
@@ -129,7 +142,33 @@ const CodeEditor = () => {
 
             });
 
-          
+            // Listen for editor lock updates
+            socketRef.current.on('editor-locked', ({ lockedBy }) => {
+                setIsLocked(true);
+                setLockedBy(lockedBy);
+                if (lockedBy !== location.state?.username) {
+                    toast(`${lockedBy} is editing, you can't edit right now.`);
+                }
+            });
+
+            socketRef.current.on('editor-unlocked', () => {
+                setIsLocked(false);
+                setLockedBy(null);
+                if (lockedBy !== location.state?.username) {
+                    toast('You can edit now.');
+                }
+              });
+
+              socketRef.current.on('lock-failed', ({ lockedBy }) => {
+                setIsLocked(true);
+                setLockedBy(lockedBy);
+                if (lockedBy !== location.state?.username) {
+                    toast(`Editor is locked by ${lockedBy}.`);
+                }
+              });
+        
+
+
 
 
 
@@ -259,6 +298,7 @@ const CodeEditor = () => {
                 socketRef.current.off('disconnected');
                 socketRef.current.off('code-change');
                 socketRef.current.off('sync-code');
+                releaseLock();
                 
                 socketRef.current.disconnect();
 
@@ -266,7 +306,7 @@ const CodeEditor = () => {
 
         };
 
-    }, []);
+    }, [roomId, location.state]);
 
 
 
@@ -282,6 +322,7 @@ const CodeEditor = () => {
     const handleTutorialComplete = () => {
         setShowTutorial(false);
     };
+    
 
     const onMount = (editor) => {
         editorRef.current = editor;
@@ -293,7 +334,7 @@ const CodeEditor = () => {
 
         editor.onDidChangeModelContent((event) => {
 
-           
+
             const codeValue = editor.getValue();
             valueRef.current = codeValue
             throttledEmit(codeValue);
@@ -304,9 +345,19 @@ const CodeEditor = () => {
 
             const newValue = editor.getValue();
             onChange(newValue);
+
+            if (!isLocked || lockedBy === location.state?.username) {
+                // If the editor is not locked or the current user has the lock, request the lock
+                requestLock();
+            }
         });
 
-      
+        editor.onDidBlurEditorText(() => {
+            releaseLock(); // Release the lock when the user stops editing
+        });
+        
+
+
 
 
     }
@@ -425,10 +476,16 @@ const CodeEditor = () => {
                                 {/* client lists */}
 
                                 {
-                                    clients.map((client) => (
-                                        <Client key={client.socketId} username={client.username} />
+                                    clients.map((client) => {
+                                        const isEditing = lockedBy === client.username; // Determine if the client is the editor
+                                        return (
+                                        
+                                        <Client key={client.socketId} username={client.username} 
+                                        isEditing={isEditing}
+                                        />
 
-                                    ))
+                                    )
+                                    })
                                 }
 
                             </div>
@@ -469,10 +526,12 @@ const CodeEditor = () => {
                                         value={value}
                                         onMount={onMount}
                                         onChange={onChange}
-                                       
+                                        options={{
+                                            readOnly: isLocked && lockedBy !== location.state?.username, // Disable editor for other users
+                                          }}
                                     />;
 
-                                    
+
 
                                 </Box>
 

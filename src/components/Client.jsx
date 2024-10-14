@@ -1,7 +1,8 @@
 import React from 'react'
 import Avatar from 'react-avatar';
+import { Box } from 'lucide-react';
 
-const Client = ({username}) => {
+const Client = ({username, isEditing}) => {
   return (
     <div className='flex items-center mb-3'>
 
@@ -10,6 +11,15 @@ const Client = ({username}) => {
         />
 
         <span className='mx-2 p-2 text-xl'>{username.toString()}</span>
+        <Box
+        style={{
+          width: '30px',
+          height: '20px',
+          borderRadius: '80%',
+          backgroundColor: isEditing ? 'green' : 'transparent',
+          marginRight: '8px',
+        }}
+      />
       
     </div>
   )

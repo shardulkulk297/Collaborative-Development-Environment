@@ -196,7 +196,7 @@ app.post('/api/save-code-on-disconnect', async (req, res) =>{
     const {roomId, code, email} = req.body;
 
     try{
-        await user.updateOne(
+        await User.updateOne(
             
             {email: email},
             {$set: {[`codeSnippets.${roomId}`]: code}}
@@ -248,6 +248,7 @@ const io = new Server(server, {
 
 const userSocketMap = {};
 const roomCodeMap = {};
+let roomLocks = {};
 
 
 
@@ -318,6 +319,35 @@ io.on('connection', (socket) => {
 
     socket.on("sync-code", ({ socketId, code }) => {
         io.to(socketId).emit("sync-code", { code });
+    });
+
+    socket.on('request-lock', ({ roomId, username }) => {
+        if (!roomLocks[roomId]) {
+            // Lock is available, grant it to the user
+            roomLocks[roomId] = username;
+            io.in(roomId).emit('editor-locked', { lockedBy: username });
+        } else {
+            // Lock is held by someone else, notify the requesting user
+            socket.emit('lock-failed', { lockedBy: roomLocks[roomId] });
+        }
+    });
+
+    // Release the editor lock when the user stops editing
+    socket.on('release-lock', ({ roomId, username }) => {
+        if (roomLocks[roomId] === username) {
+            // Only the user holding the lock can release it
+            roomLocks[roomId] = null;
+            io.in(roomId).emit('editor-unlocked');
+        }
+    });
+
+    socket.on('disconnect', () => {
+        for (const roomId in roomLocks) {
+            if (roomLocks[roomId] === socket.username) {
+                roomLocks[roomId] = null;
+                io.in(roomId).emit('editor-unlocked');
+            }
+        }
     });
 
     socket.on('disconnecting', () => {
