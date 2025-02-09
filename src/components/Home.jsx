@@ -53,7 +53,7 @@ const Home = () => {
     const data = await response.json()
     console.log(data);
 
-    if (!roomId || !username || !email || !password || !role) {
+    if (!roomId || !username || !email || !password) {
       toast.error('Please fill in all fields or check you email if it exists');
       return;
   }
@@ -171,18 +171,7 @@ const Home = () => {
                 }
                 type="password" className='form-control mb-2 block w-full px-4 py-2 text-white bg-[#1a1326] border border-[#9a86d4] rounded-md focus:outline-none focus:ring-2 focus:ring-[#c6b0ff] placeholder-gray-400' placeholder='Password' />
 
-              <select
-                value={role} onChange={(e) => {
-                  setRole(e.target.value)
-                  
-                }
-                }
-                type="selectlist" className='form-control mb-2 block w-full px-4 py-2 text-white bg-[#1a1326] border border-[#9a86d4] rounded-md focus:outline-none focus:ring-2 focus:ring-[#c6b0ff] placeholder-gray-400' placeholder='ROLE' >
-                  <option value="">Select Role</option>
-                  <option value="Project Manager">Project Manager</option>
-                  <option value="Team Leader">Team Leader</option>
-                  <option value="Member">Member</option>
-                   </select>
+              
               </div>
 
               <button
